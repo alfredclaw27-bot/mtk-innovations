@@ -1,5 +1,9 @@
 const ETSY_URL = "https://www.etsy.com/shop/MTKInnovations";
-const ETSY_SHOWCASE_URL = "https://www.etsy.com/shop/MTKInnovations?section_id=50227403";
+
+const printers = [
+  { name: "Prusa MK2.5S", material: "PETG & PLA", icon: "🖨️" },
+  { name: "Bambu Lab P2S + AMS", material: "Multi-color PETG & PLA", icon: "🎨" },
+];
 
 const products = [
   {
@@ -261,6 +265,40 @@ export default function Home() {
                 <p className="text-zinc-400 text-sm leading-relaxed">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── ABOUT / OUR SETUP ─── */}
+      <section className="px-6 py-20 bg-zinc-950/50">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-6">Who&apos;s Behind This</h2>
+          <p className="text-zinc-400 leading-relaxed mb-8">
+            MTK Innovations is Mike — a software engineer by trade, a maker by necessity. After years wrestling with broken third-party tools and 3D prints that didn&apos;t fit anything, he started building his own. Every print is made with care in Blackwood, NJ.
+          </p>
+          <p className="text-lg font-medium text-zinc-200 mb-8">
+            Made by an engineer, for everyone.
+          </p>
+
+          {/* Printers */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-left">
+            <h3 className="font-semibold text-sm uppercase tracking-wider text-orange-400 mb-4 text-center">
+              ⚙️ Our Printers
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {printers.map((p) => (
+                <div key={p.name} className="flex items-center gap-3 p-3 bg-zinc-800/50 rounded-lg">
+                  <span className="text-2xl">{p.icon}</span>
+                  <div>
+                    <p className="font-medium text-sm">{p.name}</p>
+                    <p className="text-zinc-500 text-xs">{p.material}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-zinc-500 text-xs text-center mt-4">
+              PETG primary · PLA available · AMS multi-color capable · Open to specialty materials
+            </p>
           </div>
         </div>
       </section>
