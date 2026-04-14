@@ -13,23 +13,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MTK Innovations — Custom 3D Prints & Parts | Etsy Star Seller",
+  title: "MTK Innovations — 3D Printed Hive Board, Mailbox Flag & Custom Parts | Etsy Star Seller",
   description:
-    "MTK Innovations — Star Seller Etsy shop. Custom 3D prints, personalized models, pool valve knob replacements, and 3D design files. 4.8★ rated, 112+ reviews. Fast turnaround from Blackwood, NJ.",
+    "MTK Innovations — Star Seller Etsy shop. Best sellers: Hive Game Board ($9.95), Magnetic Mailbox Flag ($6.99), Pool Valve Knob. 4.8★ rated, printed in Blackwood, NJ. Fast shipping.",
   keywords: [
-    "3D printing custom",
-    "custom 3D prints",
+    "Hive game board 3D printed",
+    "mailbox flag magnetic townhouse",
     "pool valve knob replacement",
-    "3D model files",
-    "personalized 3D prints",
+    "3D printed game accessories",
     "MTK Innovations",
-    "custom parts 3D printed",
+    "custom 3D prints",
+    "mailbox flag",
+    "Hive board",
   ],
   openGraph: {
-    title: "MTK Innovations — Custom 3D Prints & Parts",
-    description: "Custom 3D prints, personalized models, and pool parts. Star Seller on Etsy, 4.8★ rated. Fast turnaround.",
+    title: "MTK Innovations — 3D Printed Game Boards & Home Products",
+    description: "Best-selling Hive Game Board and magnetic mailbox flags. Star Seller on Etsy, 4.8★. Ships from Blackwood, NJ.",
     url: "https://www.etsy.com/shop/MTKInnovations",
     type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
   icons: {
     icon: [
@@ -49,8 +54,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        <meta name="google-adsense-account" content="ca-pub-YOUR_ADSENSE_ID" />
-        <meta name="monetization" content="YOUR_MONTIZATION_ID" />
+        {/* ─── GOOGLE ADSENSE ───
+             To enable ads: replace YOUR_ADSENSE_ID below with your actual
+             publisher ID from https://www.google.com/adsense
+             The format is: ca-pub-XXXXXXXXXXXXXXXXX
+             Keep this comment so Mike knows where to fill in.
+        ─── */}
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_ADSENSE_PUB_ID`}
+          crossOrigin="anonymous"
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#0a0a0a] text-white font-sans antialiased`}
