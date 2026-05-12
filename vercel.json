@@ -1,6 +1,5 @@
 {
-  "org": "team_e5PLpZ7QkNr3VjM7TKpgto8I",
-  "project": "mtk-innovations",
   "buildCommand": "npm run build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "framework": "nextjs"
 }
