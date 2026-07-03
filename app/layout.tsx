@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Syne, DM_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const syne = Syne({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-syne",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const dmSans = DM_Sans({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-dm-sans",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -28,18 +32,16 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "MTK Innovations — 3D Printed Game Boards & Home Products",
-    description: "Best-selling Hive Game Board and magnetic mailbox flags. Star Seller on Etsy, 4.8★. Ships from Blackwood, NJ.",
+    description:
+      "Best-selling Hive Game Board and magnetic mailbox flags. Star Seller on Etsy, 4.8★. Ships from Blackwood, NJ.",
     url: "https://www.etsy.com/shop/MTKInnovations",
     type: "website",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  robots: { index: true, follow: true },
   icons: {
     icon: [
       {
-        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.85em' font-size='85'>⚙️</text></svg>",
+        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='85'>⬡</text></svg>",
         type: "image/svg+xml",
       },
     ],
@@ -48,27 +50,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
       <head>
         {/* ─── GOOGLE ADSENSE ───
-             To enable ads: replace YOUR_ADSENSE_ID below with your actual
-             publisher ID from https://www.google.com/adsense
-             The format is: ca-pub-XXXXXXXXXXXXXXXXX
-             Keep this comment so Mike knows where to fill in.
+             Replace YOUR_ADSENSE_PUB_ID with your actual publisher ID (ca-pub-XXXXXXXXXXXXXXXX)
         ─── */}
         <script
           async
-          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_ADSENSE_PUB_ID`}
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_ADSENSE_PUB_ID"
           crossOrigin="anonymous"
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#0a0a0a] text-white font-sans antialiased`}
-      >
+      <body className="min-h-screen antialiased">
         {children}
       </body>
     </html>
