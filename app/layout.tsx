@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans } from "next/font/google";
+import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const syne = Syne({
@@ -16,10 +16,23 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+
+const SITE_URL = "https://mtkinnovations.com";
+
 export const metadata: Metadata = {
-  title: "MTK Innovations — 3D Printed Hive Board, Mailbox Flag & Custom Parts | Etsy Star Seller",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "MTK Innovations — 3D Printed Game Boards, Home Products & Custom Parts",
+    template: "%s | MTK Innovations",
+  },
   description:
-    "MTK Innovations — Star Seller Etsy shop. Best sellers: Hive Game Board ($9.95), Magnetic Mailbox Flag ($6.99), Pool Valve Knob. 4.8★ rated, printed in Blackwood, NJ. Fast shipping.",
+    "MTK Innovations — Star Seller Etsy shop in Blackwood, NJ. 4.9★, 357 reviews, 1,207 sales. Connect Hive Game Board, magnetic mailbox flags, pool valve replacements, and custom 3D print requests.",
   keywords: [
     "Hive game board 3D printed",
     "mailbox flag magnetic townhouse",
@@ -28,20 +41,21 @@ export const metadata: Metadata = {
     "MTK Innovations",
     "custom 3D prints",
     "mailbox flag",
-    "Hive board",
+    "Connect Hive game board",
   ],
   openGraph: {
     title: "MTK Innovations — 3D Printed Game Boards & Home Products",
     description:
-      "Best-selling Hive Game Board and magnetic mailbox flags. Star Seller on Etsy, 4.8★. Ships from Blackwood, NJ.",
-    url: "https://www.etsy.com/shop/MTKInnovations",
+      "Best-selling Connect Hive Game Board and magnetic mailbox flags. Star Seller on Etsy, 4.9★ across 357 reviews. Ships from Blackwood, NJ.",
+    url: SITE_URL,
+    siteName: "MTK Innovations",
     type: "website",
   },
   robots: { index: true, follow: true },
   icons: {
     icon: [
       {
-        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='85'>⬡</text></svg>",
+        url: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23FF4405'/><text x='50' y='68' font-size='58' font-weight='900' text-anchor='middle' fill='%231A130D' font-family='sans-serif'>M</text></svg>",
         type: "image/svg+xml",
       },
     ],
@@ -52,17 +66,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable}`}>
-      <head>
-        {/* ─── GOOGLE ADSENSE ───
-             Replace YOUR_ADSENSE_PUB_ID with your actual publisher ID (ca-pub-XXXXXXXXXXXXXXXX)
-        ─── */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR_ADSENSE_PUB_ID"
-          crossOrigin="anonymous"
-        />
-      </head>
+    <html lang="en" data-scroll-behavior="smooth" className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen antialiased">
         {children}
       </body>

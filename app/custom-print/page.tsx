@@ -1,26 +1,129 @@
 "use client";
 
 import { useState } from "react";
+import Footer from "../components/Footer";
+import Nav from "../components/Nav";
 
-const ETSY_URL = "https://www.etsy.com/shop/MTKInnovations";
+type FormState = {
+  name: string;
+  email: string;
+  description: string;
+  material: string;
+  dimensions: string;
+  urgency: string;
+};
+
+const INITIAL_FORM: FormState = {
+  name: "",
+  email: "",
+  description: "",
+  material: "",
+  dimensions: "",
+  urgency: "",
+};
+
+const EXPECTATION_POINTS = [
+  "We review every request before quoting.",
+  "Most replies go out within a few hours.",
+  "Photos and measurements usually speed up approval.",
+];
+
+const SAMPLE_QUOTES = [
+  {
+    title: "Replacement part",
+    range: "Usually $10-$25",
+    detail: "Best when you can send a photo and rough measurements.",
+  },
+  {
+    title: "Personalized gift or favor",
+    range: "Usually $15-$60",
+    detail: "Final price depends on quantity, colors, and print time.",
+  },
+  {
+    title: "Bulk event order",
+    range: "Quoted case by case",
+    detail: "Message volume and deadline up front for the fastest estimate.",
+  },
+];
+
+function ChecklistItem({
+  done,
+  label,
+  hint,
+}: {
+  done: boolean;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <li
+      className="flex items-start gap-3 rounded-xl px-4 py-3"
+      style={{
+        background: done ? "var(--accent-subtle)" : "var(--bg)",
+        border: `1px solid ${done ? "var(--accent-border)" : "var(--border)"}`,
+      }}
+    >
+      <span
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.7rem] font-bold"
+        style={{
+          background: done ? "var(--accent)" : "var(--bg-card-hover)",
+          color: done ? "var(--accent-ink)" : "var(--text-dim)",
+        }}
+      >
+        {done ? "OK" : "?"}
+      </span>
+      <span>
+        <span className="block text-sm font-semibold" style={{ color: "var(--text)" }}>
+          {label}
+        </span>
+        <span className="block text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+          {hint}
+        </span>
+      </span>
+    </li>
+  );
+}
 
 export default function CustomPrintPage() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    description: "",
-    material: "",
-    dimensions: "",
-    urgency: "",
-  });
+  const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const readinessChecks = [
+    {
+      done: form.description.trim().length >= 30,
+      label: "Clear description",
+      hint: "A sentence or two about what the part does helps us quote faster.",
+    },
+    {
+      done: Boolean(photoPreview),
+      label: "Reference photo or sketch",
+      hint: "Optional, but it often removes a round of back-and-forth.",
+    },
+    {
+      done: form.dimensions.trim().length > 0,
+      label: "Measurements",
+      hint: "Even approximate sizes are useful when replacing a broken part.",
+    },
+    {
+      done: form.material.trim().length > 0 || form.urgency.trim().length > 0,
+      label: "Practical constraints",
+      hint: "Material preference or deadline helps us recommend the right setup.",
+    },
+  ];
+
+  const completedChecks = readinessChecks.filter((item) => item.done).length;
+  const readinessPercent = Math.round((completedChecks / readinessChecks.length) * 100);
+
+  const handlePhotoChange = (file?: File | null) => {
+    if (!file) {
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      return;
+    }
+
     setPhotoFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setPhotoPreview(reader.result as string);
@@ -33,15 +136,13 @@ export default function CustomPrintPage() {
     setMessage("");
 
     try {
-      let photoBase64 = "";
-      if (photoPreview) {
-        photoBase64 = photoPreview;
-      }
-
       const res = await fetch("/api/custom-print", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, photoBase64 }),
+        body: JSON.stringify({
+          ...form,
+          photoBase64: photoPreview ?? "",
+        }),
       });
 
       const data = await res.json();
@@ -53,8 +154,8 @@ export default function CustomPrintPage() {
       }
 
       setStatus("success");
-      setMessage(data.message || "Request received! We'll be in touch shortly.");
-      setForm({ name: "", email: "", description: "", material: "", dimensions: "", urgency: "" });
+      setMessage(data.message || "Request received! We will be in touch shortly.");
+      setForm(INITIAL_FORM);
       setPhotoFile(null);
       setPhotoPreview(null);
     } catch {
@@ -64,273 +165,451 @@ export default function CustomPrintPage() {
   };
 
   const inputClass =
-    "w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-colors";
+    "w-full rounded-xl border px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]";
 
   return (
-    <main className="flex flex-col min-h-screen">
-      {/* ─── NAV ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
-            <span className="text-2xl">⚙️</span>
-            <span>MTK<span className="text-orange-400">Innovations</span></span>
-          </a>
-          <div className="flex items-center gap-6 text-sm text-zinc-400">
-            <a href="/" className="hover:text-white transition-colors">Home</a>
-            <a href="/gallery" className="hover:text-white transition-colors">Gallery</a>
-            <a href="/custom-print" className="hover:text-white transition-colors text-white">Request Custom Print</a>
-            <a href={ETSY_URL} target="_blank" rel="noopener noreferrer" className="btn-primary text-sm py-2 px-4">
-              Etsy Store
-            </a>
-          </div>
-        </div>
-      </nav>
+    <>
+      <Nav />
 
-      {/* ─── HERO ─── */}
-      <section className="pt-32 pb-12 px-6 text-center">
-        <div className="max-w-2xl mx-auto">
-          <span className="inline-block mb-4 px-3 py-1 text-xs font-medium tracking-widest uppercase bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-full">
-            🖨️ Custom Orders
-          </span>
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4">Request a Custom Print</h1>
-          <p className="text-zinc-400 text-lg leading-relaxed">
-            Describe what you need, upload a photo if you have one, and we&apos;ll tell you if it&apos;s printable — with a quote before we print anything.
-          </p>
-        </div>
-      </section>
+      <main>
+        <section className="px-5 pt-32 pb-12 dot-grid" style={{ background: "var(--bg)" }}>
+          <div className="mx-auto max-w-5xl">
+            <span className="badge mb-5 inline-flex">Custom orders and replacement parts</span>
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
+              <div>
+                <h1
+                  className="font-heading text-4xl font-extrabold leading-tight sm:text-5xl"
+                  style={{ color: "var(--text)" }}
+                >
+                  Get a real custom-print quote before anything gets printed.
+                </h1>
+                <p
+                  className="mt-5 max-w-2xl text-base leading-relaxed sm:text-lg"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  Send the part photo, sketch, or idea. MTK reviews it manually, confirms whether it
+                  is printable, and replies with pricing before production starts.
+                </p>
+              </div>
 
-      {/* ─── FORM ─── */}
-      <section className="px-6 pb-20">
-        <div className="max-w-3xl mx-auto">
-          {/* Info card */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-2xl mb-1">📸</p>
-                <p className="text-sm text-zinc-400">Send a photo or sketch</p>
-              </div>
-              <div>
-                <p className="text-2xl mb-1">💬</p>
-                <p className="text-sm text-zinc-400">We confirm feasibility + price</p>
-              </div>
-              <div>
-                <p className="text-2xl mb-1">📦</p>
-                <p className="text-sm text-zinc-400">We print and ship fast</p>
-              </div>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Photo upload */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-              <label className="block text-sm font-medium text-zinc-300 mb-3">
-                📎 Upload a Photo (optional but helpful)
-              </label>
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                  photoPreview ? "border-orange-500/50 bg-orange-500/5" : "border-zinc-700 hover:border-zinc-600"
-                }`}
-                onClick={() => document.getElementById("photo-input")?.click()}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const file = e.dataTransfer.files[0];
-                  if (file && file.type.startsWith("image/")) {
-                    setPhotoFile(file);
-                    const reader = new FileReader();
-                    reader.onloadend = () => setPhotoPreview(reader.result as string);
-                    reader.readAsDataURL(file);
-                  }
-                }}
+                className="rounded-3xl p-6"
+                style={{ background: "var(--bg-card)", border: "2px solid var(--ink)", boxShadow: "4px 4px 0 0 var(--ink)" }}
               >
-                <input
-                  id="photo-input"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
-                {photoPreview ? (
-                  <div className="flex flex-col items-center gap-4">
-                    <img
-                      src={photoPreview}
-                      alt="Preview"
-                      className="h-48 object-contain rounded-lg"
-                    />
-                    <p className="text-sm text-zinc-500">{photoFile?.name}</p>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPhotoFile(null);
-                        setPhotoPreview(null);
-                      }}
-                      className="text-sm text-red-400 hover:text-red-300"
+                <p className="text-xs font-semibold uppercase tracking-[0.22em]" style={{ color: "var(--accent)" }}>
+                  What happens next
+                </p>
+                <div className="mt-5 grid gap-3">
+                  {[
+                    { step: "01", text: "You send the part details and any photo you have." },
+                    { step: "02", text: "We confirm fit, material, and feasibility." },
+                    { step: "03", text: "You get a quote and timeline before printing." },
+                  ].map((item) => (
+                    <div
+                      key={item.step}
+                      className="flex items-start gap-4 rounded-2xl px-4 py-4"
+                      style={{ background: "var(--bg)", border: "2px solid var(--border-strong)" }}
                     >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-3">
-                    <span className="text-4xl">🖼️</span>
-                    <div>
-                      <p className="text-zinc-300 text-sm font-medium">
-                        Drop an image here, or click to select
-                      </p>
-                      <p className="text-zinc-600 text-xs mt-1">
-                        PNG, JPG, WEBP up to 10MB · A photo of the part or a sketch works great
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-bold"
+                        style={{ background: "var(--accent-subtle)", color: "var(--accent)" }}
+                      >
+                        {item.step}
+                      </span>
+                      <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                        {item.text}
                       </p>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-5 pb-20">
+          <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div
+                className="rounded-3xl p-6 sm:p-7"
+                style={{ background: "var(--bg-card)", border: "2px solid var(--ink)", boxShadow: "4px 4px 0 0 var(--ink)" }}
+              >
+                <div className="mb-5 flex items-center justify-between gap-4">
+                  <div>
+                    <h2 className="font-heading text-2xl font-bold" style={{ color: "var(--text)" }}>
+                      Project details
+                    </h2>
+                    <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+                      The more context you share, the faster the quote.
+                    </p>
                   </div>
-                )}
-              </div>
-            </div>
+                  <div
+                    className="rounded-2xl px-4 py-3 text-right"
+                    style={{ background: "var(--bg)", border: "2px solid var(--border-strong)" }}
+                  >
+                    <p className="text-[0.7rem] uppercase tracking-[0.2em]" style={{ color: "var(--text-dim)" }}>
+                      Quote readiness
+                    </p>
+                    <p className="font-heading text-2xl font-extrabold" style={{ color: "var(--text)" }}>
+                      {readinessPercent}%
+                    </p>
+                  </div>
+                </div>
 
-            {/* Text fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Your Name <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Mike Kapp"
-                  className={inputClass}
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Email Address <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="mike@example.com"
-                  className={inputClass}
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </div>
-            </div>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text)" }}>
+                      Your name <span style={{ color: "var(--accent)" }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Mike Kapp"
+                      className={inputClass}
+                      style={{
+                        background: "var(--bg)",
+                        borderColor: "var(--ink)",
+                        borderWidth: "2px",
+                        color: "var(--text)",
+                        boxShadow: "none",
+                      }}
+                      value={form.name}
+                      onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text)" }}>
+                      Email address <span style={{ color: "var(--accent)" }}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="mike@example.com"
+                      className={inputClass}
+                      style={{
+                        background: "var(--bg)",
+                        borderColor: "var(--ink)",
+                        borderWidth: "2px",
+                        color: "var(--text)",
+                        boxShadow: "none",
+                      }}
+                      value={form.email}
+                      onChange={(e) => setForm((current) => ({ ...current, email: e.target.value }))}
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">
-                What do you need printed? <span className="text-red-400">*</span>
-              </label>
-              <textarea
-                required
-                rows={5}
-                placeholder="Describe what you're looking for. The more detail the better — what it's for, any specific requirements, how many you need, etc."
-                className={`${inputClass} resize-none`}
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              />
-            </div>
+                <div className="mt-6">
+                  <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text)" }}>
+                    What do you need printed? <span style={{ color: "var(--accent)" }}>*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={6}
+                    placeholder="Example: I need a replacement knob for a pool valve. The original cracked at the center and I can send a photo plus rough measurements."
+                    className={`${inputClass} resize-none`}
+                    style={{
+                      background: "var(--bg)",
+                      borderColor: "var(--border-strong)",
+                      color: "var(--text)",
+                      boxShadow: "none",
+                    }}
+                    value={form.description}
+                    onChange={(e) => setForm((current) => ({ ...current, description: e.target.value }))}
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Preferred Material
-                </label>
-                <select
-                  className={inputClass}
-                  value={form.material}
-                  onChange={(e) => setForm((f) => ({ ...f, material: e.target.value }))}
+                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text)" }}>
+                      Preferred material
+                    </label>
+                    <select
+                      className={inputClass}
+                      style={{
+                        background: "var(--bg)",
+                        borderColor: "var(--ink)",
+                        borderWidth: "2px",
+                        color: "var(--text)",
+                        boxShadow: "none",
+                      }}
+                      value={form.material}
+                      onChange={(e) => setForm((current) => ({ ...current, material: e.target.value }))}
+                    >
+                      <option value="">No preference</option>
+                      <option value="PETG">PETG (durable, outdoor-safe)</option>
+                      <option value="PLA">PLA (standard, easy to color-match)</option>
+                      <option value="ASA">ASA (UV-resistant outdoor use)</option>
+                      <option value="TPU">TPU (flexible)</option>
+                      <option value="Other">Other or unsure</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text)" }}>
+                      Dimensions
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="50mm x 30mm x 10mm"
+                      className={inputClass}
+                      style={{
+                        background: "var(--bg)",
+                        borderColor: "var(--ink)",
+                        borderWidth: "2px",
+                        color: "var(--text)",
+                        boxShadow: "none",
+                      }}
+                      value={form.dimensions}
+                      onChange={(e) => setForm((current) => ({ ...current, dimensions: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium" style={{ color: "var(--text)" }}>
+                      Urgency
+                    </label>
+                    <select
+                      className={inputClass}
+                      style={{
+                        background: "var(--bg)",
+                        borderColor: "var(--ink)",
+                        borderWidth: "2px",
+                        color: "var(--text)",
+                        boxShadow: "none",
+                      }}
+                      value={form.urgency}
+                      onChange={(e) => setForm((current) => ({ ...current, urgency: e.target.value }))}
+                    >
+                      <option value="">No rush</option>
+                      <option value="Standard">Standard (3-5 days)</option>
+                      <option value="Rush">Rush (1-2 days)</option>
+                      <option value="ASAP">ASAP</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="rounded-3xl p-6 sm:p-7"
+                style={{ background: "var(--bg-card)", border: "2px solid var(--ink)", boxShadow: "4px 4px 0 0 var(--ink)" }}
+              >
+                <div className="mb-4">
+                  <h2 className="font-heading text-2xl font-bold" style={{ color: "var(--text)" }}>
+                    Photo or sketch
+                  </h2>
+                  <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+                    Optional, but very helpful for replacement parts and fit checks.
+                  </p>
+                </div>
+
+                <div
+                  className="rounded-2xl border-2 border-dashed p-6 text-center transition-colors"
+                  style={{
+                    borderColor: photoPreview ? "var(--accent)" : "var(--border-strong)",
+                    background: photoPreview ? "var(--accent-subtle)" : "var(--bg)",
+                  }}
+                  onClick={() => document.getElementById("photo-input")?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file && file.type.startsWith("image/")) {
+                      handlePhotoChange(file);
+                    }
+                  }}
                 >
-                  <option value="">No preference</option>
-                  <option value="PETG">PETG (durable, outdoor)</option>
-                  <option value="PLA">PLA (standard, multi-color)</option>
-                  <option value="ASA">ASA (UV-resistant outdoor)</option>
-                  <option value="TPU">TPU (flexible)</option>
-                  <option value="Other">Other / Unsure</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Dimensions
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g., 50mm x 30mm x 10mm"
-                  className={inputClass}
-                  value={form.dimensions}
-                  onChange={(e) => setForm((f) => ({ ...f, dimensions: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Urgency
-                </label>
-                <select
-                  className={inputClass}
-                  value={form.urgency}
-                  onChange={(e) => setForm((f) => ({ ...f, urgency: e.target.value }))}
-                >
-                  <option value="">No rush</option>
-                  <option value="Standard">Standard (3–5 days)</option>
-                  <option value="Rush">Rush (1–2 days)</option>
-                  <option value="ASAP">ASAP</option>
-                </select>
-              </div>
-            </div>
+                  <input
+                    id="photo-input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
+                  />
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="btn-primary w-full text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {status === "loading" ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span> Submitting…
-                </span>
-              ) : (
-                "Submit Custom Print Request"
+                  {photoPreview ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <img
+                        src={photoPreview}
+                        alt="Uploaded reference preview"
+                        className="max-h-56 rounded-2xl object-contain"
+                      />
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                          {photoFile?.name}
+                        </p>
+                        <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+                          Click the card to replace the image.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePhotoChange(null);
+                        }}
+                        className="btn-secondary text-sm"
+                        style={{ minHeight: "38px", padding: "0.55rem 1rem" }}
+                      >
+                        Remove image
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-3">
+                      <div
+                        className="flex h-14 w-14 items-center justify-center rounded-2xl"
+                        style={{ background: "var(--bg-card)", border: "2px solid var(--ink)", boxShadow: "4px 4px 0 0 var(--ink)" }}
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path
+                            d="M12 16V8M8 12h8"
+                            stroke="var(--accent)"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
+                          <rect
+                            x="3.75"
+                            y="3.75"
+                            width="16.5"
+                            height="16.5"
+                            rx="3"
+                            stroke="var(--accent-border)"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                          Drop an image here or click to select one
+                        </p>
+                        <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>
+                          PNG, JPG, or WEBP. A phone photo of the part is usually enough.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button type="submit" disabled={status === "loading"} className="btn-primary mt-6 w-full text-base">
+                  {status === "loading" ? "Submitting request..." : "Submit custom print request"}
+                </button>
+              </div>
+
+              {status === "success" && (
+                <div
+                  className="rounded-3xl px-6 py-5"
+                  style={{
+                    background: "var(--success-bg)",
+                    border: "1px solid var(--success-border)",
+                  }}
+                >
+                  <p className="text-lg font-semibold" style={{ color: "var(--success-text)" }}>
+                    Request received
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--success-text)" }}>
+                    {message}
+                  </p>
+                </div>
               )}
-            </button>
-          </form>
 
-          {/* Status messages */}
-          {status === "success" && (
-            <div className="mt-6 bg-green-500/10 border border-green-500/30 rounded-xl p-6 text-center">
-              <p className="text-green-400 font-medium text-lg mb-1">✅ Request received!</p>
-              <p className="text-green-300/80 text-sm">{message}</p>
-              <p className="text-green-300/60 text-sm mt-2">
-                We&apos;ll get back to you shortly. Check your email (and spam folder if needed).
-              </p>
-            </div>
-          )}
+              {status === "error" && (
+                <div
+                  className="rounded-3xl px-6 py-5"
+                  style={{
+                    background: "var(--error-bg)",
+                    border: "1px solid var(--error-border)",
+                  }}
+                >
+                  <p className="text-lg font-semibold" style={{ color: "var(--error-text)" }}>
+                    Submission error
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--error-text)" }}>
+                    {message}
+                  </p>
+                </div>
+              )}
+            </form>
 
-          {status === "error" && (
-            <div className="mt-6 bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center">
-              <p className="text-red-400 font-medium text-lg mb-1">❌ Error</p>
-              <p className="text-red-300/80 text-sm">{message}</p>
-            </div>
-          )}
+            <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+              <div
+                className="rounded-3xl p-6"
+                style={{ background: "var(--bg-card)", border: "2px solid var(--ink)", boxShadow: "4px 4px 0 0 var(--ink)" }}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em]" style={{ color: "var(--accent)" }}>
+                      Readiness check
+                    </p>
+                    <h2 className="mt-2 font-heading text-2xl font-bold" style={{ color: "var(--text)" }}>
+                      Help us quote on the first reply
+                    </h2>
+                  </div>
+                  <div
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl text-lg font-bold"
+                    style={{ background: "var(--bg)", border: "2px solid var(--border-strong)", color: "var(--text)" }}
+                  >
+                    {completedChecks}/{readinessChecks.length}
+                  </div>
+                </div>
+                <ul className="mt-5 space-y-3">
+                  {readinessChecks.map((item) => (
+                    <ChecklistItem key={item.label} done={item.done} label={item.label} hint={item.hint} />
+                  ))}
+                </ul>
+              </div>
 
-          {/* Note */}
-          <p className="text-zinc-600 text-xs text-center mt-6">
-            We typically respond within a few hours. For immediate help, message us directly on Etsy.
-          </p>
-        </div>
-      </section>
+              <div
+                className="rounded-3xl p-6"
+                style={{ background: "var(--bg-card)", border: "2px solid var(--ink)", boxShadow: "4px 4px 0 0 var(--ink)" }}
+              >
+                <h2 className="font-heading text-2xl font-bold" style={{ color: "var(--text)" }}>
+                  What to expect
+                </h2>
+                <ul className="mt-4 space-y-3">
+                  {EXPECTATION_POINTS.map((point) => (
+                    <li key={point} className="flex items-start gap-3 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                      <span
+                        className="mt-1 block h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ background: "var(--accent)" }}
+                      />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-      {/* ─── FOOTER ─── */}
-      <footer className="mt-auto px-6 py-8 border-t border-zinc-800">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-zinc-600 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⚙️</span>
-            <span>MTK<span className="text-zinc-400">Innovations</span></span>
+              <div
+                className="rounded-3xl p-6"
+                style={{ background: "var(--bg-card)", border: "2px solid var(--ink)", boxShadow: "4px 4px 0 0 var(--ink)" }}
+              >
+                <h2 className="font-heading text-2xl font-bold" style={{ color: "var(--text)" }}>
+                  Typical project ranges
+                </h2>
+                <div className="mt-4 space-y-4">
+                  {SAMPLE_QUOTES.map((quote) => (
+                    <div
+                      key={quote.title}
+                      className="rounded-2xl px-4 py-4"
+                      style={{ background: "var(--bg)", border: "2px solid var(--border-strong)" }}
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+                          {quote.title}
+                        </p>
+                        <span className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--accent)" }}>
+                          {quote.range}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>
+                        {quote.detail}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
           </div>
-          <p>© {new Date().getFullYear()} MTK Innovations · Blackwood, NJ</p>
-          <div className="flex gap-4">
-            <a href={ETSY_URL} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">Etsy ↗</a>
-          </div>
-        </div>
-      </footer>
-    </main>
+        </section>
+      </main>
+
+      <Footer />
+    </>
   );
 }
